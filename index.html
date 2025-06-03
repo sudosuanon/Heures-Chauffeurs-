@@ -320,6 +320,157 @@
             max-width: 300px;
         }
     }
+
+    /* Styles pour les modals */
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        border-radius: 15px;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    .large-modal {
+        max-width: 90%;
+        width: 90%;
+    }
+
+    @keyframes modalSlideIn {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+        padding: 20px 30px;
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.5em;
+    }
+
+    .close {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .close:hover {
+        transform: scale(1.2);
+    }
+
+    .modal-body {
+        padding: 30px;
+    }
+
+    .modal-footer {
+        padding: 20px 30px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        border-radius: 0 0 15px 15px;
+    }
+
+    .sheet-preview {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+
+    .sheet-item {
+        background: white;
+        margin: 15px 0;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid #3498db;
+        transition: all 0.3s ease;
+    }
+
+    .sheet-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .sheet-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .sheet-date {
+        color: #7f8c8d;
+        font-size: 0.9em;
+    }
+
+    .sheet-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+        background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+        border-radius: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        font-size: 0.9em;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+
+    .sheet-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .btn-small {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
 </style>
 ```
 
@@ -414,10 +565,134 @@
         <button class="btn btn-success" onclick="exportToEmail()">📧 Envoyer par Email</button>
         <button class="btn btn-warning" onclick="printTimesheet()">🖨️ Imprimer</button>
         <button class="btn btn-primary" onclick="saveData()">💾 Sauvegarder</button>
+        <button class="btn btn-primary" onclick="showLoadModal()">📂 Charger Fiche</button>
+        <button class="btn btn-warning" onclick="showSavedSheets()">📋 Mes Fiches</button>
+    </div>
+
+    <!-- Modal pour charger une fiche -->
+    <div id="loadModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📂 Charger une fiche existante</h2>
+                <span class="close" onclick="closeLoadModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="loadSelect">Sélectionner une fiche :</label>
+                    <select id="loadSelect" onchange="previewSheet()">
+                        <option value="">-- Choisir une fiche --</option>
+                    </select>
+                </div>
+                <div id="sheetPreview" class="sheet-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="loadSelectedSheet()">Charger</button>
+                <button class="btn btn-warning" onclick="deleteSelectedSheet()">🗑️ Supprimer</button>
+                <button class="btn" onclick="closeLoadModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour voir toutes les fiches -->
+    <div id="sheetsModal" class="modal" style="display: none;">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2>📋 Mes fiches sauvegardées</h2>
+                <span class="close" onclick="closeSheetsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="sheetsList"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeSheetsModal()">Fermer</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
+    // Base de données IndexedDB
+    let db;
+    const DB_NAME = 'TimesheetDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'timesheets';
+
+    // Initialiser la base de données
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                db = request.result;
+                resolve(db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('date', 'date', { unique: false });
+                    store.createIndex('employee', 'employee', { unique: false });
+                }
+            };
+        });
+    }
+
+    // Sauvegarder dans la base de données
+    async function saveToDatabase(data) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            
+            // Ajouter timestamp et identifiant unique
+            data.id = `${data.lastName}_${data.firstName}_${data.month}_${data.year}`;
+            data.timestamp = new Date().toISOString();
+            data.employee = `${data.firstName} ${data.lastName}`;
+            data.date = `${data.month} ${data.year}`;
+            
+            const request = store.put(data);
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Charger toutes les fiches
+    async function loadAllSheets() {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.getAll();
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Charger une fiche spécifique
+    async function loadSheet(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(id);
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Supprimer une fiche
+    async function deleteSheet(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.delete(id);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
     // Générer les jours du mois
     function generateDays() {
         const tbody = document.getElementById('timesheetBody');
@@ -548,7 +823,7 @@
     }
 
     // Sauvegarder les données
-    function saveData() {
+    async function saveData() {
         const data = {
             lastName: document.getElementById('lastName').value,
             firstName: document.getElementById('firstName').value,
@@ -557,6 +832,12 @@
             observations: document.getElementById('observations').value,
             days: {}
         };
+        
+        // Validation
+        if (!data.lastName || !data.firstName || !data.month || !data.year) {
+            alert('⚠️ Veuillez remplir au minimum le nom, prénom, mois et année avant de sauvegarder.');
+            return;
+        }
         
         for (let day = 1; day <= 31; day++) {
             data.days[day] = {
@@ -570,14 +851,290 @@
             };
         }
         
-        // Simuler la sauvegarde
-        const successMessage = document.getElementById('successMessage');
-        successMessage.style.display = 'block';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000);
+        try {
+            await saveToDatabase(data);
+            const successMessage = document.getElementById('successMessage');
+            successMessage.innerHTML = '✅ Données sauvegardées avec succès dans la base de données !';
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+        } catch (error) {
+            alert('❌ Erreur lors de la sauvegarde : ' + error.message);
+        }
+    }
+
+    // Afficher le modal de chargement
+    async function showLoadModal() {
+        try {
+            const sheets = await loadAllSheets();
+            const select = document.getElementById('loadSelect');
+            select.innerHTML = '<option value="">-- Choisir une fiche --</option>';
+            
+            sheets.forEach(sheet => {
+                const option = document.createElement('option');
+                option.value = sheet.id;
+                option.textContent = `${sheet.employee} - ${sheet.date}`;
+                select.appendChild(option);
+            });
+            
+            document.getElementById('loadModal').style.display = 'block';
+        } catch (error) {
+            alert('❌ Erreur lors du chargement des fiches : ' + error.message);
+        }
+    }
+
+    // Prévisualiser une fiche
+    async function previewSheet() {
+        const select = document.getElementById('loadSelect');
+        const preview = document.getElementById('sheetPreview');
         
-        console.log('Données sauvegardées:', data);
+        if (!select.value) {
+            preview.innerHTML = '';
+            return;
+        }
+        
+        try {
+            const sheet = await loadSheet(select.value);
+            let workDays = 0;
+            let totalHours = 0;
+            
+            for (let day = 1; day <= 31; day++) {
+                if (sheet.days[day].start && sheet.days[day].end) {
+                    workDays++;
+                    const serviceTime = sheet.days[day].service;
+                    if (serviceTime !== '0h00') {
+                        const [hours, minutes] = serviceTime.replace('h', ':').split(':').map(Number);
+                        totalHours += hours + minutes / 60;
+                    }
+                }
+            }
+            
+            preview.innerHTML = `
+                <h4>${sheet.employee} - ${sheet.date}</h4>
+                <p><strong>Jours travaillés :</strong> ${workDays}</p>
+                <p><strong>Total heures :</strong> ${Math.floor(totalHours)}h${Math.round((totalHours % 1) * 60).toString().padStart(2, '0')}</p>
+                <p><strong>Sauvegardé le :</strong> ${new Date(sheet.timestamp).toLocaleString('fr-FR')}</p>
+            `;
+        } catch (error) {
+            preview.innerHTML = '<p style="color: red;">❌ Erreur lors du chargement de la prévisualisation</p>';
+        }
+    }
+
+    // Charger la fiche sélectionnée
+    async function loadSelectedSheet() {
+        const select = document.getElementById('loadSelect');
+        if (!select.value) {
+            alert('⚠️ Veuillez sélectionner une fiche à charger.');
+            return;
+        }
+        
+        try {
+            const sheet = await loadSheet(select.value);
+            
+            // Charger les informations de base
+            document.getElementById('lastName').value = sheet.lastName || '';
+            document.getElementById('firstName').value = sheet.firstName || '';
+            document.getElementById('month').value = sheet.month || '';
+            document.getElementById('year').value = sheet.year || '';
+            document.getElementById('observations').value = sheet.observations || '';
+            
+            // Charger les données des jours
+            for (let day = 1; day <= 31; day++) {
+                if (sheet.days[day]) {
+                    document.getElementById(`start_${day}`).value = sheet.days[day].start || '';
+                    document.getElementById(`end_${day}`).value = sheet.days[day].end || '';
+                    document.getElementById(`break_${day}`).value = sheet.days[day].break || '';
+                    document.getElementById(`service_${day}`).textContent = sheet.days[day].service || '0h00';
+                    document.getElementById(`meal_${day}`).checked = sheet.days[day].meal || false;
+                    document.getElementById(`overnight_${day}`).checked = sheet.days[day].overnight || false;
+                    document.getElementById(`misc_${day}`).value = sheet.days[day].misc || '';
+                }
+            }
+            
+            calculateTotal();
+            closeLoadModal();
+            
+            const successMessage = document.getElementById('successMessage');
+            successMessage.innerHTML = '✅ Fiche chargée avec succès !';
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+            
+        } catch (error) {
+            alert('❌ Erreur lors du chargement de la fiche : ' + error.message);
+        }
+    }
+
+    // Supprimer la fiche sélectionnée
+    async function deleteSelectedSheet() {
+        const select = document.getElementById('loadSelect');
+        if (!select.value) {
+            alert('⚠️ Veuillez sélectionner une fiche à supprimer.');
+            return;
+        }
+        
+        if (!confirm('❓ Êtes-vous sûr de vouloir supprimer cette fiche ? Cette action est irréversible.')) {
+            return;
+        }
+        
+        try {
+            await deleteSheet(select.value);
+            showLoadModal(); // Recharger la liste
+            document.getElementById('sheetPreview').innerHTML = '';
+            alert('✅ Fiche supprimée avec succès !');
+        } catch (error) {
+            alert('❌ Erreur lors de la suppression : ' + error.message);
+        }
+    }
+
+    // Fermer le modal de chargement
+    function closeLoadModal() {
+        document.getElementById('loadModal').style.display = 'none';
+    }
+
+    // Afficher toutes les fiches sauvegardées
+    async function showSavedSheets() {
+        try {
+            const sheets = await loadAllSheets();
+            const container = document.getElementById('sheetsList');
+            
+            if (sheets.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #7f8c8d; font-size: 1.2em;">📂 Aucune fiche sauvegardée pour le moment</p>';
+            } else {
+                container.innerHTML = sheets.map(sheet => {
+                    let workDays = 0;
+                    let totalServiceHours = 0;
+                    let totalBreakHours = 0;
+                    let totalMeals = 0;
+                    let totalOvernights = 0;
+                    
+                    for (let day = 1; day <= 31; day++) {
+                        if (sheet.days[day].start && sheet.days[day].end) {
+                            workDays++;
+                            
+                            // Calculer heures de service
+                            const serviceTime = sheet.days[day].service;
+                            if (serviceTime !== '0h00') {
+                                const [hours, minutes] = serviceTime.replace('h', ':').split(':').map(Number);
+                                totalServiceHours += hours + minutes / 60;
+                            }
+                            
+                            // Calculer heures de pause
+                            if (sheet.days[day].break) {
+                                const breakMinutes = parseBreakTime(sheet.days[day].break);
+                                totalBreakHours += breakMinutes / 60;
+                            }
+                            
+                            // Compter repas et découchés
+                            if (sheet.days[day].meal) totalMeals++;
+                            if (sheet.days[day].overnight) totalOvernights++;
+                        }
+                    }
+                    
+                    return `
+                        <div class="sheet-item">
+                            <div class="sheet-header">
+                                <div class="sheet-title">${sheet.employee}</div>
+                                <div class="sheet-date">${new Date(sheet.timestamp).toLocaleDateString('fr-FR')}</div>
+                            </div>
+                            <div><strong>Période :</strong> ${sheet.date}</div>
+                            <div class="sheet-stats">
+                                <div class="stat-item">
+                                    <div class="stat-value">${workDays}</div>
+                                    <div class="stat-label">Jours travaillés</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${Math.floor(totalServiceHours)}h${Math.round((totalServiceHours % 1) * 60).toString().padStart(2, '0')}</div>
+                                    <div class="stat-label">Temps de service</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${Math.floor(totalBreakHours)}h${Math.round((totalBreakHours % 1) * 60).toString().padStart(2, '0')}</div>
+                                    <div class="stat-label">Temps de pause</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${totalMeals}</div>
+                                    <div class="stat-label">Repas</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value">${totalOvernights}</div>
+                                    <div class="stat-label">Découchés</div>
+                                </div>
+                            </div>
+                            <div class="sheet-actions">
+                                <button class="btn btn-primary btn-small" onclick="loadSheetById('${sheet.id}')">📂 Charger</button>
+                                <button class="btn btn-warning btn-small" onclick="deleteSheetById('${sheet.id}')">🗑️ Supprimer</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            document.getElementById('sheetsModal').style.display = 'block';
+        } catch (error) {
+            alert('❌ Erreur lors du chargement des fiches : ' + error.message);
+        }
+    }
+
+    // Charger une fiche par son ID
+    async function loadSheetById(id) {
+        try {
+            const sheet = await loadSheet(id);
+            
+            // Charger les informations de base
+            document.getElementById('lastName').value = sheet.lastName || '';
+            document.getElementById('firstName').value = sheet.firstName || '';
+            document.getElementById('month').value = sheet.month || '';
+            document.getElementById('year').value = sheet.year || '';
+            document.getElementById('observations').value = sheet.observations || '';
+            
+            // Charger les données des jours
+            for (let day = 1; day <= 31; day++) {
+                if (sheet.days[day]) {
+                    document.getElementById(`start_${day}`).value = sheet.days[day].start || '';
+                    document.getElementById(`end_${day}`).value = sheet.days[day].end || '';
+                    document.getElementById(`break_${day}`).value = sheet.days[day].break || '';
+                    document.getElementById(`service_${day}`).textContent = sheet.days[day].service || '0h00';
+                    document.getElementById(`meal_${day}`).checked = sheet.days[day].meal || false;
+                    document.getElementById(`overnight_${day}`).checked = sheet.days[day].overnight || false;
+                    document.getElementById(`misc_${day}`).value = sheet.days[day].misc || '';
+                }
+            }
+            
+            calculateTotal();
+            closeSheetsModal();
+            
+            const successMessage = document.getElementById('successMessage');
+            successMessage.innerHTML = '✅ Fiche chargée avec succès !';
+            successMessage.style.display = 'block';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+            
+        } catch (error) {
+            alert('❌ Erreur lors du chargement de la fiche : ' + error.message);
+        }
+    }
+
+    // Supprimer une fiche par son ID
+    async function deleteSheetById(id) {
+        if (!confirm('❓ Êtes-vous sûr de vouloir supprimer cette fiche ? Cette action est irréversible.')) {
+            return;
+        }
+        
+        try {
+            await deleteSheet(id);
+            showSavedSheets(); // Recharger la liste
+            alert('✅ Fiche supprimée avec succès !');
+        } catch (error) {
+            alert('❌ Erreur lors de la suppression : ' + error.message);
+        }
+    }
+
+    // Fermer le modal des fiches
+    function closeSheetsModal() {
+        document.getElementById('sheetsModal').style.display = 'none';
     }
 
     // Exporter vers email
@@ -632,7 +1189,15 @@
     }
 
     // Initialiser la page
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Initialiser la base de données
+        try {
+            await initDB();
+            console.log('📊 Base de données initialisée avec succès');
+        } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de la base de données:', error);
+        }
+        
         generateDays();
         
         // Définir le mois et l'année actuels
@@ -642,6 +1207,18 @@
         
         document.getElementById('month').value = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
         document.getElementById('year').value = currentYear;
+        
+        // Fermer les modals en cliquant en dehors
+        window.onclick = function(event) {
+            const loadModal = document.getElementById('loadModal');
+            const sheetsModal = document.getElementById('sheetsModal');
+            if (event.target === loadModal) {
+                closeLoadModal();
+            }
+            if (event.target === sheetsModal) {
+                closeSheetsModal();
+            }
+        };
     });
 
     // Style d'impression
